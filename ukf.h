@@ -1,10 +1,10 @@
 #ifndef UKF_H
 #define UKF_H
 
-#include "Eigen/Dense"
+#include "libs/Eigen/Dense"
 #include "utility.h"
 
-class UKF {
+class Ukf {
 public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
@@ -50,7 +50,7 @@ public:
   double std_radrd_ ;
 
   ///* Weights of sigma points
-  VectorXd weights_;
+  Eigen::VectorXd weights_;
 
   ///* State dimension
   int n_x_;
@@ -70,12 +70,12 @@ public:
   /**
    * Constructor
    */
-  UKF();
+  Ukf();
 
   /**
    * Destructor
    */
-  virtual ~UKF();
+  virtual ~Ukf();
 
   /**
    * ProcessMeasurement
@@ -101,6 +101,13 @@ public:
    * @param reading The measurement at k+1
    */
   void UpdateRadar(utility::SensorReading reading);
+
+  void GenerateSigmaPoints(Eigen::MatrixXd* Xsig_out);
+  void SigmaPointPrediction(Eigen::MatrixXd* Xsig_out);
+  void PredictMeanAndCovariance(Eigen::VectorXd* x_pred, Eigen::MatrixXd* P_pred);
+  void PredictLidarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
+  void PredictRadarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
+
 };
 
 #endif /* UKF_H */

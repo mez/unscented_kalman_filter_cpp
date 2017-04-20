@@ -4,7 +4,7 @@
 #include <vector>
 #include <stdlib.h>
 #include "utility.h"
-#include "fusion_ekf.h"
+#include "ukf.h"
 
 using namespace std;
 using Eigen::VectorXd;
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     ground_truths.push_back(ground_truth);
   }
 
-
+  Ukf ukf;
   vector<VectorXd> estimations;
 
   size_t number_of_measurements = sensor_readings.size();
@@ -98,17 +98,17 @@ int main(int argc, char* argv[]) {
     // ukf.ProcessMeasurement(reading);
 
     // output the estimation
-    VectorXd x_ = ukf.current_estimate();
+    VectorXd x_ = ukf.x_;
 
     // timestamp
     out_file_ << reading.timestamp << "\t"; // pos1 - est
 
     // output the state vector
-    out_file_ << x_(0) << "\t"; // pos1 - est
-    out_file_ << x_(1) << "\t"; // pos2 - est
-    out_file_ << x_(2) << "\t"; // vel_abs -est
-    out_file_ << x_(3) << "\t"; // yaw_angle -est
-    out_file_ << x_(4) << "\t"; // yaw_rate -est
+    out_file_ << ukf.x_(0) << "\t"; // pos1 - est
+    out_file_ << ukf.x_(1) << "\t"; // pos2 - est
+    out_file_ << ukf.x_(2) << "\t"; // vel_abs -est
+    out_file_ << ukf.x_(3) << "\t"; // yaw_angle -est
+    out_file_ << ukf.x_(4) << "\t"; // yaw_rate -est
 
     switch (reading.sensor_type) {
       case SensorType::RADAR:
@@ -142,10 +142,10 @@ int main(int argc, char* argv[]) {
     // convert ukf x vector to cartesian to compare to ground truth
     VectorXd ukf_x_cartesian_ = VectorXd(4);
 
-    float x_estimate_ = x_(0);
-    float y_estimate_ = x_(1);
-    float vx_estimate_ = x_(2) * cos(x_(3));
-    float vy_estimate_ = x_(2) * sin(x_(3));
+    float x_estimate_ = ukf.x_(0);
+    float y_estimate_ = ukf.x_(1);
+    float vx_estimate_ = ukf.x_(2) * cos(ukf.x_(3));
+    float vy_estimate_ = ukf.x_(2) * sin(ukf.x_(3));
 
     ukf_x_cartesian_ << x_estimate_, y_estimate_, vx_estimate_, vy_estimate_;
 

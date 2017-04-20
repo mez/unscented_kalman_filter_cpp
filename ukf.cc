@@ -3,8 +3,9 @@
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using utility::SensorReading;
 
-UKF::UKF() {
+Ukf::Ukf() {
   is_initialized_ = false;
   // if this is false, laser measurements will be ignored (except during init)
   use_laser_ = true;
@@ -46,38 +47,44 @@ UKF::UKF() {
   n_aug_ = 7;
 
   ///* Sigma point spreading parameter
-  double lambda_;
+  lambda_ = 3 - n_aug_;
 
   ///* the current NIS for radar
-  double NIS_radar_ = 0;
+  NIS_radar_ = 0;
 
   ///* the current NIS for laser
-  double NIS_laser_ = 0;
+  NIS_laser_ = 0;
 }
 
-UKF::~UKF() {}
+Ukf::~Ukf() {}
 
 /**
  * @param {SensorReading} reading The latest measurement data of
  * either radar or laser.
  */
-void UKF::ProcessMeasurement(SensorReading reading) {}
+void Ukf::ProcessMeasurement(SensorReading reading) {}
 
 /**
  * Predicts sigma points, the state, and the state covariance matrix.
  * @param {double} delta_t the change in time (in seconds) between the last
  * measurement and this one.
  */
-void UKF::Prediction(double delta_t) {}
+void Ukf::Prediction(double delta_t) {}
 
 /**
  * Updates the state and the state covariance matrix using a laser measurement.
  * @param {SensorReading} reading
  */
-void UKF::UpdateLidar(SensorReading reading) {}
+void Ukf::UpdateLidar(SensorReading reading) {}
 
 /**
  * Updates the state and the state covariance matrix using a radar measurement.
  * @param {SensorReading} reading
  */
-void UKF::UpdateRadar(SensorReading reading) {}
+void Ukf::UpdateRadar(SensorReading reading) {}
+
+void Ukf::GenerateSigmaPoints(MatrixXd* Xsig_out){}
+void Ukf::SigmaPointPrediction(MatrixXd* Xsig_out){}
+void Ukf::PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred){}
+void Ukf::PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out){}
+void Ukf::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out){}
