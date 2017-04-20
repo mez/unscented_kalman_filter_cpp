@@ -6,6 +6,7 @@ add_definitions(-std=c++0x -Wall)
 
 set(sources
    utility.cc
+   ukf.cc
    main.cc)
 
 add_executable(UnscentedKF ${sources})
