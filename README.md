@@ -21,8 +21,8 @@ An Unscented Kalman Filter that uses a Constant Turn Rate and Velocity (CTRV) mo
     - eg. `./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt`
 
 
-### FYI:
+## FYI:
 
-**Even though linear approximation with using a Jacobian matrix stinks ;)**
+*Even though linear approximation using a Jacobian matrix stinks ;)*
 ---
 1. Check out my implementation of an [Extended Kalman Filter in C++](https://github.com/mez/extended_kalman_filter_cpp)
