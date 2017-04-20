@@ -5,7 +5,7 @@
 #include "utility.h"
 
 class Ukf {
-public:
+ public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
@@ -101,6 +101,9 @@ public:
    * @param reading The measurement at k+1
    */
   void UpdateRadar(utility::SensorReading reading);
+
+
+ private:
 
   void GenerateSigmaPoints(Eigen::MatrixXd* Xsig_out);
   void SigmaPointPrediction(Eigen::MatrixXd* Xsig_out);
