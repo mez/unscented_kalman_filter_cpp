@@ -83,7 +83,18 @@ void Ukf::UpdateLidar(SensorReading reading) {}
  */
 void Ukf::UpdateRadar(SensorReading reading) {}
 
-void Ukf::GenerateSigmaPoints(MatrixXd* Xsig_out){}
+void Ukf::GenerateSigmaPoints(MatrixXd* Xsig_out) {
+  /*
+  * na = 7
+  * lambda = 3-na
+  * x_
+  * P_
+  * std_a_
+  * std_yawdd_
+  * MatrixXd Xsig = MatrixXd(na, 2*na+1)
+  */
+}
+
 void Ukf::SigmaPointPrediction(MatrixXd* Xsig_out){}
 void Ukf::PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred){}
 void Ukf::PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out){}
