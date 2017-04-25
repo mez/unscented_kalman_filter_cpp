@@ -102,11 +102,20 @@ class Ukf {
    */
   void UpdateRadar(utility::SensorReading reading);
 
-
- private:
-
+  /**
+   * Generates augmented sigma points
+   * @param Xsig_out expects to be a (7,15) matrix to hold the result.
+   */
   void GenerateSigmaPoints(Eigen::MatrixXd* Xsig_out);
-  void SigmaPointPrediction(Eigen::MatrixXd* Xsig_out);
+
+  /**
+   * Given the sigma points and delta time (dt) it will make the sigma point prediction.
+   *
+   * @param Xsig_aug the augmented sigma points to use.
+   * @param dt the delta time
+   * @param Xsig_pred the output to place results. Expected to be (5,15)
+   */
+  void PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, Eigen::MatrixXd* Xsig_out);
   void PredictMeanAndCovariance(Eigen::VectorXd* x_pred, Eigen::MatrixXd* P_pred);
   void PredictLidarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
   void PredictRadarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
