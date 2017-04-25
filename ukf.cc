@@ -135,7 +135,7 @@ void Ukf::PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, E
   MatrixXd Xsig_pred = MatrixXd(5, 15);
   double dt2 = dt*dt;
 
-  for (int i = 0; i< 15; i++) {
+  for (int i = 0; i< 15; ++i) {
 
     double p_x = Xsig_aug(0,i);
     double p_y = Xsig_aug(1,i);
@@ -163,7 +163,7 @@ void Ukf::PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, E
       px_p = p_x + v*dt*cos(yaw);
       py_p = p_y + v*dt*sin(yaw);
     }
-    
+
     //add noise
     px_p = px_p + 0.5*nu_a*dt2 * cos(yaw);
     py_p = py_p + 0.5*nu_a*dt2 * sin(yaw);
