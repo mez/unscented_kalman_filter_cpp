@@ -22,8 +22,10 @@ class Ukf {
   ///* state covariance matrix
   Eigen::MatrixXd P_;
 
-  ///* predicted sigma points matrix
-  Eigen::MatrixXd Xsig_pred_;
+  ///* let's setup the noise matrices for sensors to save compute later
+  Eigen::MatrixXd R_radar_;
+  Eigen::MatrixXd R_laser_;
+
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -66,6 +68,8 @@ class Ukf {
 
   ///* the current NIS for laser
   double NIS_laser_;
+
+
 
   /**
    * Constructor
@@ -116,9 +120,9 @@ class Ukf {
    * @param Xsig_pred the output to place results. Expected to be (5,15)
    */
   void PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, Eigen::MatrixXd* Xsig_out);
-  void PredictMeanAndCovariance(Eigen::VectorXd* x_pred, Eigen::MatrixXd* P_pred);
+  void PredictMeanAndCovariance(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* x_pred, Eigen::MatrixXd* P_pred);
   void PredictLidarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
-  void PredictRadarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
+  void PredictRadarMeasurement(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
 
 };
 

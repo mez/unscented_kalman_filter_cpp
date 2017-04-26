@@ -1,8 +1,11 @@
+#include <iostream>
 #include "ukf.h"
+
 
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using Eigen::ArrayXd;
 using utility::SensorReading;
 
 Ukf::Ukf() {
@@ -54,6 +57,23 @@ Ukf::Ukf() {
 
   ///* the current NIS for laser
   NIS_laser_ = 0;
+
+  double weight_0 = lambda_/(lambda_+n_aug_);
+  double weight_remaining = 0.5/(lambda_+n_aug_);
+  weights_ = VectorXd::Zero(15);
+  weights_ =  weights_.array() + weight_remaining;
+  weights_(0) = weight_0;
+
+  //add measurement noise covariance matrix
+  R_radar_ = MatrixXd(3,3);
+  R_radar_ << std_radr_*std_radr_, 0, 0,
+              0, std_radphi_*std_radphi_, 0,
+              0, 0,std_radrd_*std_radrd_;
+
+  R_laser_ = MatrixXd(2,2);
+  R_laser_ << std_laspx_*std_laspx_, 0,
+              0, std_laspy_*std_laspy_;
+
 }
 
 Ukf::~Ukf() {}
@@ -182,6 +202,71 @@ void Ukf::PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, E
     *Xsig_out = Xsig_pred;
   }
 }
-void Ukf::PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred){}
+
+void Ukf::PredictMeanAndCovariance(const MatrixXd& Xsig_pred, VectorXd* x_pred, MatrixXd* P_pred) {
+  //create vector for predicted state
+  VectorXd x = VectorXd(5);
+  //create covariance matrix for prediction
+  MatrixXd P = MatrixXd::Zero(5, 5);
+
+  //Predict mean here.
+  x = Xsig_pred * weights_;
+
+  MatrixXd x_diff = MatrixXd(5, 15);
+  //we could do a matrix of diffs like this, but I still haven't figured out
+  // how to normalize the angles in a vectorized manner yet. :(
+  //x_diff = Xsig_pred.colwise() - x;
+
+  //predicted state covariance matrix
+  for (int i = 0; i < 15; i++) {  //iterate over sigma points
+    // state difference
+    VectorXd x_diff = Xsig_pred.col(i) - x;
+    //angle normalization
+    x_diff(3) = atan2(sin(x_diff(3)), cos(x_diff(3)));
+    P += weights_(i) * x_diff * x_diff.transpose();
+  }
+
+  *x_pred = x;
+  *P_pred = P;
+}
 void Ukf::PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out){}
-void Ukf::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out){}
+
+void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
+  MatrixXd Zsig_pred = MatrixXd(3, 15);
+
+  //transform sigma points into measurement space
+  for (int i = 0; i < 15; i++) {
+    // extract values for better readibility
+    double p_x = Xsig_pred(0,i);
+    double p_y = Xsig_pred(1,i);
+    double v  = Xsig_pred(2,i);
+    double yaw = Xsig_pred(3,i);
+    double v1 = cos(yaw)*v;
+    double v2 = sin(yaw)*v;
+
+    // measurement model
+    Zsig_pred(0,i) = sqrt(p_x*p_x + p_y*p_y);                        //r
+    Zsig_pred(1,i) = atan2(p_y,p_x);                                 //phi
+    Zsig_pred(2,i) = (Zsig_pred(0,i) < 1e-4) ? 0.0 : (p_x*v1 + p_y*v2 )/sqrt(p_x*p_x + p_y*p_y);   //r_dot
+  }
+
+  //mean predicted measurement
+  VectorXd z_pred = VectorXd::Zero(3);
+  z_pred = Zsig_pred * weights_;
+
+  //measurement covariance matrix S
+  MatrixXd S = MatrixXd::Zero(3,3);
+  for (int i = 0; i < 15; i++) {  //2n+1 simga points
+    //residual
+    VectorXd z_diff = Zsig_pred.col(i) - z_pred;
+    //angle normalization
+    z_diff(1) = atan2(sin(z_diff(1)), cos(z_diff(1)));
+
+    S += weights_(i) * z_diff * z_diff.transpose();
+  }
+
+  S += R_radar_;
+
+  *z_out = z_pred;
+  *S_out = S;
+}
