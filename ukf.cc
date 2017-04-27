@@ -237,7 +237,22 @@ void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
 
   Zsig_pred = H_laser_ * Xsig_pred;
 
-  cout << "Zsig_pred Laser: \n" << Zsig_pred << endl;
+  //mean predicted measurement
+  VectorXd z_pred = VectorXd::Zero(2);
+  z_pred = Zsig_pred * weights_;
+
+  MatrixXd S = MatrixXd::Zero(2,2);
+  for (int i = 0; i < 15; i++) {  //2n+1 simga points
+    //residual
+    VectorXd z_diff = Zsig_pred.col(i) - z_pred;
+
+    S += weights_(i) * z_diff * z_diff.transpose();
+  }
+
+  S += R_laser_;
+
+  *z_out = z_pred;
+  *S_out = S;
 }
 
 void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
