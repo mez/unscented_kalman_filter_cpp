@@ -74,6 +74,9 @@ Ukf::Ukf() {
   R_laser_ << std_laspx_*std_laspx_, 0,
               0, std_laspy_*std_laspy_;
 
+  H_laser_ = MatrixXd(2,5);
+  H_laser_ << 1, 0, 0, 0, 0,
+              0, 1, 0, 0, 0;
 }
 
 Ukf::~Ukf() {}
@@ -229,7 +232,13 @@ void Ukf::PredictMeanAndCovariance(const MatrixXd& Xsig_pred, VectorXd* x_pred, 
   *x_pred = x;
   *P_pred = P;
 }
-void Ukf::PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out){}
+void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
+  MatrixXd Zsig_pred = MatrixXd(2, 15);
+
+  Zsig_pred = H_laser_ * Xsig_pred;
+
+  cout << "Zsig_pred Laser: \n" << Zsig_pred << endl;
+}
 
 void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
   MatrixXd Zsig_pred = MatrixXd(3, 15);

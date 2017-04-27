@@ -26,6 +26,9 @@ class Ukf {
   Eigen::MatrixXd R_radar_;
   Eigen::MatrixXd R_laser_;
 
+  ///* for Zpred transformation
+  Eigen::MatrixXd H_laser_;
+
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -121,7 +124,7 @@ class Ukf {
    */
   void PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, Eigen::MatrixXd* Xsig_out);
   void PredictMeanAndCovariance(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* x_pred, Eigen::MatrixXd* P_pred);
-  void PredictLidarMeasurement(Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
+  void PredictLidarMeasurement(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
   void PredictRadarMeasurement(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
 
 };
