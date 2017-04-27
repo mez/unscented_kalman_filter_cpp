@@ -148,6 +148,11 @@ TEST_CASE("PredictRadarMeasurement() Test") {
   //radar measurement noise standard deviation radius change in m/s
   ukf.std_radrd_ = 0.1;
 
+  ukf.R_radar_ = MatrixXd(3,3);
+  ukf.R_radar_ << ukf.std_radr_*ukf.std_radr_, 0, 0,
+    0, ukf.std_radphi_*ukf.std_radphi_, 0,
+    0, 0,ukf.std_radrd_*ukf.std_radrd_;
+
   VectorXd output_z = VectorXd(3);
   output_z << 6.12155,
               0.245993,
