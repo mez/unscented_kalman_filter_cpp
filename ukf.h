@@ -10,12 +10,6 @@ class Ukf {
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
 
-  ///* if this is false, laser measurements will be ignored (except for init)
-  bool use_laser_;
-
-  ///* if this is false, radar measurements will be ignored (except for init)
-  bool use_radar_;
-
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;
 
@@ -71,8 +65,6 @@ class Ukf {
 
   ///* the current NIS for laser
   double NIS_laser_;
-
-
 
   /**
    * Constructor
