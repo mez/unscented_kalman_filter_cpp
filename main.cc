@@ -15,7 +15,6 @@ using utility::CheckArguments;
 using utility::CheckFiles;
 using utility::CalculateRmse;
 
-
 int main(int argc, char* argv[]) {
 
   CheckArguments(argc, argv);
@@ -95,7 +94,7 @@ int main(int argc, char* argv[]) {
 
   for (size_t k = 0; k < number_of_measurements; ++k) {
     SensorReading reading = sensor_readings[k];
-    // ukf.ProcessMeasurement(reading);
+    ukf.ProcessMeasurement(reading);
 
     // output the estimation
     VectorXd x_ = ukf.x_;

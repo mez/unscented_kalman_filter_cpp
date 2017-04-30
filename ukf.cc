@@ -7,6 +7,7 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using Eigen::ArrayXd;
 using utility::SensorReading;
+using utility::SensorType;
 
 Ukf::Ukf() {
   is_initialized_ = false;
@@ -15,7 +16,7 @@ Ukf::Ukf() {
   x_ = VectorXd(5);
 
   // initial covariance matrix
-  P_ = MatrixXd(5, 5);
+  P_ = MatrixXd::Identity(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
@@ -80,7 +81,27 @@ Ukf::~Ukf() {}
  * @param {SensorReading} reading The latest measurement data of
  * either radar or laser.
  */
-void Ukf::ProcessMeasurement(SensorReading reading) {}
+void Ukf::ProcessMeasurement(SensorReading reading) {
+  if (!is_initialized_) {
+    switch (reading.sensor_type) {
+      case SensorType::LASER:
+        x_ << reading.measurement(0), reading.measurement(1), 0.0, 0.0, 0.0;
+        break;
+      case SensorType::RADAR:
+        x_ << reading.measurement(0) * cos(reading.measurement(1)),
+              reading.measurement(0) * sin(reading.measurement(1)),
+              0.0, 0.0, 0.0;
+        break;
+    }
+    //P_ is already set in the ctor.
+    previous_timestamp_ = reading.timestamp;
+    is_initialized_ = true;
+
+    return;
+  }
+
+
+}
 
 /**
  * Predicts sigma points, the state, and the state covariance matrix.
@@ -99,7 +120,43 @@ void Ukf::UpdateLidar(SensorReading reading) {}
  * Updates the state and the state covariance matrix using a radar measurement.
  * @param {SensorReading} reading
  */
-void Ukf::UpdateRadar(SensorReading reading) {}
+void Ukf::UpdateRadar(const MatrixXd& Xsig_pred,
+                      const MatrixXd& Zsig,
+                      const VectorXd& z_pred,
+                      const MatrixXd& S,
+                      SensorReading reading) {
+
+  //create matrix for cross correlation Tc
+  MatrixXd Tc = MatrixXd::Zero(5, 3);
+
+  //calculate cross correlation matrix
+  for (int i = 0; i < 15; i++) {  //2n+1 simga points
+
+    //residual
+    VectorXd z_diff = Zsig.col(i) - z_pred;
+    //angle normalization
+    z_diff(1) = atan2(sin(z_diff(1)), cos(z_diff(1)));
+
+    // state difference
+    VectorXd x_diff = Xsig_pred.col(i) - x_;
+    //angle normalization
+    x_diff(3) = atan2(sin(x_diff(3)), cos(x_diff(3)));
+
+    Tc += weights_(i) * x_diff * z_diff.transpose();
+  }
+
+  MatrixXd K = Tc * S.inverse();
+
+  //residual
+  VectorXd z_diff = reading.measurement - z_pred;
+
+  //angle normalization
+  z_diff(1) = atan2(sin(z_diff(1)), cos(z_diff(1)));
+
+  //update state mean and covariance matrix
+  x_ = x_ + K * z_diff;
+  P_ = P_ - K*S*K.transpose();
+}
 
 void Ukf::GenerateSigmaPoints(MatrixXd* Xsig_out) {
   /*
@@ -227,6 +284,7 @@ void Ukf::PredictMeanAndCovariance(const MatrixXd& Xsig_pred, VectorXd* x_pred, 
   *x_pred = x;
   *P_pred = P;
 }
+
 void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
   MatrixXd Zsig_pred = MatrixXd(2, 15);
 
@@ -240,7 +298,6 @@ void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
   for (int i = 0; i < 15; i++) {  //2n+1 simga points
     //residual
     VectorXd z_diff = Zsig_pred.col(i) - z_pred;
-
     S += weights_(i) * z_diff * z_diff.transpose();
   }
 
@@ -275,6 +332,7 @@ void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
 
   //measurement covariance matrix S
   MatrixXd S = MatrixXd::Zero(3,3);
+
   for (int i = 0; i < 15; i++) {  //2n+1 simga points
     //residual
     VectorXd z_diff = Zsig_pred.col(i) - z_pred;
@@ -283,7 +341,6 @@ void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
 
     S += weights_(i) * z_diff * z_diff.transpose();
   }
-
   S += R_radar_;
 
   *z_out = z_pred;

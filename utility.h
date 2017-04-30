@@ -24,9 +24,11 @@ namespace utility
                                       const std::vector<Eigen::VectorXd> &ground_truth);
   
   const Eigen::VectorXd PolarToCartesian(const Eigen::VectorXd& polar_vector);
+
   const Eigen::VectorXd CartesianToPolar(const Eigen::VectorXd& x_state);
 
   void CheckArguments(int argc, char* argv[]);
+
   void CheckFiles(std::ifstream& in_file, std::string& in_name,
                   std::ofstream& out_file, std::string& out_name);
 };

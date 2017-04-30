@@ -25,7 +25,7 @@ class Ukf {
 
 
   ///* time when the state is true, in us
-  long long time_us_;
+  long long previous_timestamp_;
 
   ///* Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -99,7 +99,11 @@ class Ukf {
    * Updates the state and the state covariance matrix using a radar measurement
    * @param reading The measurement at k+1
    */
-  void UpdateRadar(utility::SensorReading reading);
+  void UpdateRadar(const Eigen::MatrixXd& Xsig_pred,
+                   const Eigen::MatrixXd& Zsig,
+                   const Eigen::VectorXd& z_pred,
+                   const Eigen::MatrixXd& S,
+                   utility::SensorReading reading);
 
   /**
    * Generates augmented sigma points
