@@ -73,6 +73,9 @@ Ukf::Ukf() {
   H_laser_ = MatrixXd(2,5);
   H_laser_ << 1, 0, 0, 0, 0,
               0, 1, 0, 0, 0;
+
+
+  Xsig_pred_ = MatrixXd(5, 15);
 }
 
 Ukf::~Ukf() {}
@@ -100,7 +103,13 @@ void Ukf::ProcessMeasurement(SensorReading reading) {
     return;
   }
 
+  double dt = (reading.timestamp - previous_timestamp_) / 1.0e6;
 
+  //Run prediction.
+  Prediction(dt);
+
+  //Run update step
+  Update(reading);
 }
 
 /**
@@ -108,13 +117,64 @@ void Ukf::ProcessMeasurement(SensorReading reading) {
  * @param {double} delta_t the change in time (in seconds) between the last
  * measurement and this one.
  */
-void Ukf::Prediction(double delta_t) {}
+void Ukf::Prediction(double delta_t) {
+  MatrixXd Xsig_aug = MatrixXd(7, 15);
+  GenerateSigmaPoints(&Xsig_aug);
+  PredictSigmaPoints(Xsig_aug, delta_t, &Xsig_pred_);
+  PredictMeanAndCovariance(Xsig_pred_);
+}
+
+void Ukf::Update(utility::SensorReading reading) {
+  if (reading.sensor_type == SensorType::LASER) {
+    VectorXd z_pred = VectorXd(3);
+    MatrixXd Zsig_pred = MatrixXd(3,15);
+    MatrixXd S = MatrixXd(3,3);
+    PredictLidarMeasurement(Xsig_pred_, &z_pred, &S, &Zsig_pred);
+    UpdateLidar(Xsig_pred_,Zsig_pred, z_pred, S, reading);
+  } else {
+    VectorXd z_pred = VectorXd(2);
+    MatrixXd Zsig_pred = MatrixXd(2,15);
+    MatrixXd S = MatrixXd(2,2);
+    PredictRadarMeasurement(Xsig_pred_, &z_pred, &S, &Zsig_pred);
+    UpdateRadar(Xsig_pred_,Zsig_pred, z_pred, S, reading);
+  }
+}
 
 /**
  * Updates the state and the state covariance matrix using a laser measurement.
  * @param {SensorReading} reading
  */
-void Ukf::UpdateLidar(SensorReading reading) {}
+void Ukf::UpdateLidar(const MatrixXd& Xsig_pred,
+                      const MatrixXd& Zsig,
+                      const VectorXd& z_pred,
+                      const MatrixXd& S,
+                      SensorReading reading) {
+
+  //create matrix for cross correlation Tc
+  MatrixXd Tc = MatrixXd::Zero(5, 2);
+
+  //calculate cross correlation matrix
+  for (int i = 0; i < 15; i++) {  //2n+1 simga points
+    //residual
+    VectorXd z_diff = Zsig.col(i) - z_pred;
+
+    // state difference
+    VectorXd x_diff = Xsig_pred.col(i) - x_;
+    //angle normalization
+    x_diff(3) = atan2(sin(x_diff(3)), cos(x_diff(3)));
+
+    Tc += weights_(i) * x_diff * z_diff.transpose();
+  }
+
+  MatrixXd K = Tc * S.inverse();
+
+  //residual
+  VectorXd z_diff = reading.measurement - z_pred;
+
+  //update state mean and covariance matrix
+  x_ = x_ + K * z_diff;
+  P_ = P_ - K*S*K.transpose();
+}
 
 /**
  * Updates the state and the state covariance matrix using a radar measurement.
@@ -206,7 +266,9 @@ void Ukf::GenerateSigmaPoints(MatrixXd* Xsig_out) {
   *Xsig_out = Xsig_aug;
 }
 
-void Ukf::PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, Eigen::MatrixXd* Xsig_out) {
+void Ukf::PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug,
+                             const double dt,
+                             Eigen::MatrixXd* Xsig_out) {
   MatrixXd Xsig_pred = MatrixXd(5, 15);
   double dt2 = dt*dt;
 
@@ -258,14 +320,9 @@ void Ukf::PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, E
   }
 }
 
-void Ukf::PredictMeanAndCovariance(const MatrixXd& Xsig_pred, VectorXd* x_pred, MatrixXd* P_pred) {
-  //create vector for predicted state
-  VectorXd x = VectorXd(5);
-  //create covariance matrix for prediction
-  MatrixXd P = MatrixXd::Zero(5, 5);
-
+void Ukf::PredictMeanAndCovariance(const MatrixXd& Xsig_pred) {
   //Predict mean here.
-  x = Xsig_pred * weights_;
+  x_ = Xsig_pred * weights_;
 
   MatrixXd x_diff = MatrixXd(5, 15);
   //we could do a matrix of diffs like this, but I still haven't figured out
@@ -275,17 +332,18 @@ void Ukf::PredictMeanAndCovariance(const MatrixXd& Xsig_pred, VectorXd* x_pred, 
   //predicted state covariance matrix
   for (int i = 0; i < 15; i++) {  //iterate over sigma points
     // state difference
-    VectorXd x_diff = Xsig_pred.col(i) - x;
+    VectorXd x_diff = Xsig_pred.col(i) - x_;
     //angle normalization
     x_diff(3) = atan2(sin(x_diff(3)), cos(x_diff(3)));
-    P += weights_(i) * x_diff * x_diff.transpose();
+    P_ += weights_(i) * x_diff * x_diff.transpose();
   }
 
-  *x_pred = x;
-  *P_pred = P;
 }
 
-void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
+void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred,
+                                  VectorXd* z_out,
+                                  MatrixXd* S_out,
+                                  MatrixXd* Zsig_out) {
   MatrixXd Zsig_pred = MatrixXd(2, 15);
 
   Zsig_pred = H_laser_ * Xsig_pred;
@@ -305,9 +363,13 @@ void Ukf::PredictLidarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
 
   *z_out = z_pred;
   *S_out = S;
+  *Zsig_out = Zsig_pred;
 }
 
-void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, MatrixXd* S_out) {
+void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred,
+                                  VectorXd* z_out,
+                                  MatrixXd* S_out,
+                                  MatrixXd* Zsig_out) {
   MatrixXd Zsig_pred = MatrixXd(3, 15);
 
   //transform sigma points into measurement space
@@ -330,9 +392,12 @@ void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
   VectorXd z_pred = VectorXd::Zero(3);
   z_pred = Zsig_pred * weights_;
 
+//  MatrixXd Zd = Zsig_pred.colwise() - z_pred;
+//  MatrixXd Zdw = Zd*weights_.asDiagonal();
+//  MatrixXd S = Zdw * Zd.transpose();
+
   //measurement covariance matrix S
   MatrixXd S = MatrixXd::Zero(3,3);
-
   for (int i = 0; i < 15; i++) {  //2n+1 simga points
     //residual
     VectorXd z_diff = Zsig_pred.col(i) - z_pred;
@@ -341,8 +406,10 @@ void Ukf::PredictRadarMeasurement(const MatrixXd& Xsig_pred, VectorXd* z_out, Ma
 
     S += weights_(i) * z_diff * z_diff.transpose();
   }
+
   S += R_radar_;
 
   *z_out = z_pred;
   *S_out = S;
+  *Zsig_out = Zsig_pred;
 }

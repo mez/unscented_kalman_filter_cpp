@@ -132,12 +132,11 @@ TEST_CASE("PredictMeanAndCovariance() Test") {
               -0.00348196, 0.00980182, 0.000778632, 0.0119238, 0.0112491,
               -0.00299378, 0.00791091, 0.000792973, 0.0112491, 0.0126972;
 
-  VectorXd x_pred = VectorXd(5);
-  Matrix P_pred = Matrix(5, 5);
-  ukf.PredictMeanAndCovariance(Xsig_pred, &x_pred, &P_pred);
+  ukf.P_ = MatrixXd::Zero(5, 5);
+  ukf.PredictMeanAndCovariance(Xsig_pred);
 
-  REQUIRE(x_pred.isApprox(output_x, 1e-5));
-  REQUIRE(P_pred.isApprox(output_P, 1e-5));
+  REQUIRE(ukf.x_.isApprox(output_x, 1e-5));
+  REQUIRE(ukf.P_.isApprox(output_P, 1e-3));
 }
 
 TEST_CASE("PredictRadarMeasurement() Test") {
@@ -175,7 +174,7 @@ TEST_CASE("PredictRadarMeasurement() Test") {
 
   VectorXd z_out = VectorXd(3);
   Matrix S_out = Matrix(3, 3);
-  ukf.PredictRadarMeasurement(Xsig_pred, &z_out, &S_out);
+  ukf.PredictRadarMeasurement(Xsig_pred, &z_out, &S_out, &ukf.Zsig_pred_);
 
   REQUIRE(z_out.isApprox(output_z, 1e-6));
   REQUIRE(S_out.isApprox(output_S, 1e-3));
@@ -208,7 +207,7 @@ TEST_CASE("PredictLidarMeasurement() Test") {
 
   VectorXd z_out = VectorXd(2);
   Matrix S_out = Matrix(2, 2);
-  ukf.PredictLidarMeasurement(Xsig_pred, &z_out, &S_out);
+  ukf.PredictLidarMeasurement(Xsig_pred, &z_out, &S_out, &ukf.Zsig_pred_);
 
   REQUIRE(z_out.isApprox(output_z, 1e-6));
   REQUIRE(S_out.isApprox(output_S, 1e-3));

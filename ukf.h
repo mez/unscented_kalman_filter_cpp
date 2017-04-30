@@ -66,6 +66,11 @@ class Ukf {
   ///* the current NIS for laser
   double NIS_laser_;
 
+  ///* Sigma point prediction
+  Eigen::MatrixXd Xsig_pred_;
+  Eigen::MatrixXd Zsig_pred_;
+
+
   /**
    * Constructor
    */
@@ -90,10 +95,21 @@ class Ukf {
   void Prediction(double delta_t);
 
   /**
+   *
+   * Update step.
+   * @param reading  The measurement at k+1
+   */
+  void Update(utility::SensorReading reading);
+
+  /**
    * Updates the state and the state covariance matrix using a laser measurement
    * @param reading The measurement at k+1
    */
-  void UpdateLidar(utility::SensorReading reading);
+  void UpdateLidar(const Eigen::MatrixXd& Xsig_pred,
+                   const Eigen::MatrixXd& Zsig,
+                   const Eigen::VectorXd& z_pred,
+                   const Eigen::MatrixXd& S,
+                   utility::SensorReading reading);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
@@ -119,9 +135,16 @@ class Ukf {
    * @param Xsig_pred the output to place results. Expected to be (5,15)
    */
   void PredictSigmaPoints(const Eigen::MatrixXd& Xsig_aug, const double dt, Eigen::MatrixXd* Xsig_out);
-  void PredictMeanAndCovariance(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* x_pred, Eigen::MatrixXd* P_pred);
-  void PredictLidarMeasurement(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
-  void PredictRadarMeasurement(const Eigen::MatrixXd& Xsig_pred, Eigen::VectorXd* z_out, Eigen::MatrixXd* S_out);
+  void PredictMeanAndCovariance(const Eigen::MatrixXd& Xsig_pred);
+  void PredictLidarMeasurement(const Eigen::MatrixXd& Xsig_pred,
+                               Eigen::VectorXd* z_out,
+                               Eigen::MatrixXd* S_out,
+                               Eigen::MatrixXd* Zsig_out);
+
+  void PredictRadarMeasurement(const Eigen::MatrixXd& Xsig_pred,
+                               Eigen::VectorXd* z_out,
+                               Eigen::MatrixXd* S_out,
+                               Eigen::MatrixXd* Zsig_out);
 
 };
 
