@@ -20,6 +20,21 @@ An Unscented Kalman Filter that uses a Constant Turn Rate and Velocity (CTRV) mo
    some sample inputs in 'data/'.
     - eg. `./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt`
 
+## Output you should See
+
+```
+mez:build/ (master) $ ./TestUKF                                                                                        [22:11:07]
+===============================================================================
+No tests ran
+
+mez:build/ (master) $ ./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt output.txt                        [22:11:10]
+Accuracy - RMSE:
+0.0597576
+0.0865825
+ 0.331234
+ 0.215768
+Done!
+```
 
 *Even though linear approximation using a Jacobian matrix stinks ;)*
 ---
