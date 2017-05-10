@@ -18,14 +18,14 @@ Ukf::Ukf() {
 
   n_x = 5;
   n_aug = 7;
-  lambda_ = 3 - n_aug;
+  lambda = 3 - n_aug;
 
   total_sig_points = 2 * n_aug + 1;
 
-  double weight_remaining = 0.5/(lambda_+n_aug);
+  double weight_remaining = 0.5/(lambda+n_aug);
   weights = VectorXd::Zero(total_sig_points);
   weights =  weights.array() + weight_remaining;
-  weights(0) = lambda_/(lambda_+n_aug);
+  weights(0) = lambda/(lambda+n_aug);
 
   // initialize x, P
   x = VectorXd(n_x);
@@ -143,8 +143,8 @@ void Ukf::GenerateSigmaPoints() {
   Xsig_aug.col(0)  = x_aug;
 
   for (int i = 0; i< n_aug; i++) {
-    Xsig_aug.col(i+1)        = x_aug + sqrt(lambda_+n_aug) * A.col(i);
-    Xsig_aug.col(i+1+n_aug) = x_aug - sqrt(lambda_+n_aug) * A.col(i);
+    Xsig_aug.col(i+1)        = x_aug + sqrt(lambda+n_aug) * A.col(i);
+    Xsig_aug.col(i+1+n_aug) = x_aug - sqrt(lambda+n_aug) * A.col(i);
   }
 }
 

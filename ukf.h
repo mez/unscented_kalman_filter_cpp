@@ -61,7 +61,7 @@ public:
   int n_z_lidar;
 
   ///* Sigma point spreading parameter
-  double lambda_;
+  double lambda;
 
   ///* the current NIS for last processed measurement
   double nis;
