@@ -230,8 +230,7 @@ void Ukf::UpdateRadar(SensorReading& reading) {
     Zsig(1,i) = atan2(p_y,p_x);                       //phi
     if(Zsig(0,i) < 1e-4) {            //r_dot check for div by 0
       Zsig(2,i) = (p_x*v1 + p_y*v2) / 1e-4;
-    }
-    else {
+    } else {
       Zsig(2,i) = (p_x*v1 + p_y*v2) / Zsig(0,i);
     }
     
