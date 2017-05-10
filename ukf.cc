@@ -8,10 +8,10 @@ using namespace utility;
 Ukf::Ukf() {
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.6;
+  std_a = 0.6;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.9;
+  std_yawdd = 0.9;
 
   is_initialized = false;
   previous_timestamp = 0;
@@ -38,27 +38,27 @@ Ukf::Ukf() {
   x_aug.head(n_x) = x;
 
   P_aug.topLeftCorner(n_x,n_x) = P;
-  P_aug(5,5) = std_a_*std_a_;
-  P_aug(6,6) = std_yawdd_*std_yawdd_;
+  P_aug(5,5) = std_a*std_a;
+  P_aug(6,6) = std_yawdd*std_yawdd;
 
   //create sigma point matrices
   Xsig_aug = MatrixXd(n_aug, total_sig_points);
   Xsig_pred = MatrixXd(n_x, total_sig_points);
 
-  n_z_radar_ = 3;
-  n_z_lidar_ = 2;
+  n_z_radar = 3;
+  n_z_lidar = 2;
 
   // Laser measurement noise standard deviation position1 in m
-  std_laspx_ = 0.15;
+  std_laspx = 0.15;
 
   // Laser measurement noise standard deviation position2 in m
-  std_laspy_ = 0.15;
+  std_laspy = 0.15;
 
-  R_lidar_ = MatrixXd(n_z_lidar_,n_z_lidar_);
-  R_lidar_ << std_laspx_*std_laspx_, 0,
-              0, std_laspy_*std_laspy_;
+  R_lidar_ = MatrixXd(n_z_lidar,n_z_lidar);
+  R_lidar_ << std_laspx*std_laspx, 0,
+              0, std_laspy*std_laspy;
 
-  H_lidar = MatrixXd(n_z_lidar_,n_x);
+  H_lidar = MatrixXd(n_z_lidar,n_x);
   H_lidar << 1,0,0,0,0,
              0,1,0,0,0;
 
@@ -71,7 +71,7 @@ Ukf::Ukf() {
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
 
-  R_radar_ = MatrixXd(n_z_radar_,n_z_radar_);
+  R_radar_ = MatrixXd(n_z_radar,n_z_radar);
   R_radar_ << std_radr_*std_radr_, 0, 0,
               0, std_radphi_*std_radphi_, 0,
               0, 0,std_radrd_*std_radrd_;
@@ -85,8 +85,12 @@ void Ukf::ProcessMeasurement(SensorReading& reading) {
 
   double dt = (reading.timestamp - previous_timestamp) / 1.0e6;
   previous_timestamp = reading.timestamp;
-  
-  Ukf::Prediction(dt);
+
+  //if the measurement comes back to back almost instantly,
+  // then we don't really need to predict again.
+  if ( dt > 1e-3 ) {
+    Ukf::Prediction(dt);
+  }
 
   switch (reading.sensor_type) {
     case SensorType::LASER:
@@ -109,6 +113,12 @@ void Ukf::InitializeState(SensorReading &reading) {
 
   } else if (reading.sensor_type == SensorType::LASER) {
     x << reading.measurement[0], reading.measurement[1], 0, 0, 0;
+  }
+
+  //we can't let x and y be zero.
+  if ( fabs(x(0)+x(1)) < 1e-4){
+    x(0) = 1e-4;
+    x(1) = 1e-4;
   }
 
   previous_timestamp = reading.timestamp;
@@ -204,17 +214,17 @@ void Ukf::PredictMeanCovariance() {
 
 void Ukf::UpdateLidar(SensorReading& reading) {
   //transform sigma points into measurement space
-  MatrixXd Zsig = MatrixXd(n_z_lidar_, 2 * n_aug + 1);
+  MatrixXd Zsig = MatrixXd(n_z_lidar, 2 * n_aug + 1);
   Zsig = H_lidar*Xsig_pred;
 
-  CompleteUpdate(n_z_lidar_, R_lidar_, Zsig, reading);
+  CompleteUpdate(n_z_lidar, R_lidar_, Zsig, reading);
 }
 
 
 void Ukf::UpdateRadar(SensorReading& reading) {
 
   //transform sigma points into measurement space
-  MatrixXd Zsig = MatrixXd(n_z_radar_, 2 * n_aug + 1);
+  MatrixXd Zsig = MatrixXd(n_z_radar, 2 * n_aug + 1);
   for (int i = 0; i < total_sig_points; i++) {
 
     double p_x = Xsig_pred(0,i);
@@ -236,7 +246,7 @@ void Ukf::UpdateRadar(SensorReading& reading) {
     
   }
 
-  CompleteUpdate(n_z_radar_, R_radar_, Zsig, reading);
+  CompleteUpdate(n_z_radar, R_radar_, Zsig, reading);
 }
 
 

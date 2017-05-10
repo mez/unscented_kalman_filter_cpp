@@ -185,8 +185,8 @@ TEST_CASE("GenerateSigmaPoints() Test", "[sigmapoints]") {
 //  Ukf ukf = GetDummyEkfObject();
 //
 //  ukf.lidar_R = MatrixXd(2,2);
-//  ukf.lidar_R << ukf.std_laspx_*ukf.std_laspx_, 0,
-//    0, ukf.std_laspy_*ukf.std_laspy_;
+//  ukf.lidar_R << ukf.std_laspx*ukf.std_laspx, 0,
+//    0, ukf.std_laspy*ukf.std_laspy;
 //
 //  VectorXd output_z = VectorXd(2);
 //  output_z << 5.93637,

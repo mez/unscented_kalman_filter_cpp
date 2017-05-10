@@ -26,16 +26,16 @@ public:
   Eigen::VectorXd weights;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  double std_a_;
+  double std_a;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  double std_yawdd_;
+  double std_yawdd;
 
   // Laser measurement noise standard deviation position1 in m
-  double std_laspx_;
+  double std_laspx;
 
   // Laser measurement noise standard deviation position2 in m
-  double std_laspy_;
+  double std_laspy;
 
   // Radar measurement noise standard deviation radius in m
   double std_radr_;
@@ -57,8 +57,8 @@ public:
   ///* Augmented state dimension
   int n_aug;
 
-  int n_z_radar_;
-  int n_z_lidar_;
+  int n_z_radar;
+  int n_z_lidar;
 
   ///* Sigma point spreading parameter
   double lambda_;
