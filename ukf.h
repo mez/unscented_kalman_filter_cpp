@@ -73,7 +73,7 @@ public:
   // Constructor
   Ukf();
   
-  void InitializeState(const utility::SensorReading& reading);
+
   void GenerateSigmaPoints();
   void PredictSigmaPoints(double dt);
   void PredictMeanCovariance();
@@ -103,6 +103,9 @@ public:
    */
   void UpdateRadar(const utility::SensorReading& reading);
   void CompleteUpdate(const Eigen::MatrixXd& Zsig, const utility::SensorReading& reading);
+
+private:
+  void InitializeState(const utility::SensorReading& reading);
 };
 
 #endif /* UKF_H */
