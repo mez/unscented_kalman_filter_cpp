@@ -18,7 +18,7 @@ An Unscented Kalman Filter that uses a Constant Turn Rate and Velocity (CTRV) mo
 3. Compile: `cmake .. && make`
 4. Run it: `./UnscentedKF path/to/input.txt path/to/output.txt`. You can find
    some sample inputs in 'data/'.
-    - eg. `./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt`
+    - eg. `./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt output.txt`
 
 ## Output you should See
 
