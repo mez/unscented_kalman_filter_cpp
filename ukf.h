@@ -63,11 +63,8 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
-  ///* the current NIS for radar
-  double nis_radar;
-
-  ///* the current NIS for laser
-  double nis_laser;
+  ///* the current NIS for last processed measurement
+  double nis;
 
   ///* the total number of sigma points
   int total_sig_points;

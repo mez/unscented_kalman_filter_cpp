@@ -75,6 +75,8 @@ Ukf::Ukf() {
   R_radar_ << std_radr_*std_radr_, 0, 0,
               0, std_radphi_*std_radphi_, 0,
               0, 0,std_radrd_*std_radrd_;
+
+  nis = 0;
 }
 
 
@@ -214,7 +216,7 @@ void Ukf::PredictMeanCovariance() {
 
 void Ukf::UpdateLidar(SensorReading& reading) {
   //transform sigma points into measurement space
-  MatrixXd Zsig = MatrixXd(n_z_lidar, 2 * n_aug + 1);
+  MatrixXd Zsig = MatrixXd(n_z_lidar, total_sig_points);
   Zsig = H_lidar*Xsig_pred;
 
   CompleteUpdate(n_z_lidar, R_lidar_, Zsig, reading);
@@ -224,7 +226,7 @@ void Ukf::UpdateLidar(SensorReading& reading) {
 void Ukf::UpdateRadar(SensorReading& reading) {
 
   //transform sigma points into measurement space
-  MatrixXd Zsig = MatrixXd(n_z_radar, 2 * n_aug + 1);
+  MatrixXd Zsig = MatrixXd(n_z_radar, total_sig_points);
   for (int i = 0; i < total_sig_points; i++) {
 
     double p_x = Xsig_pred(0,i);
@@ -269,10 +271,11 @@ void Ukf::CompleteUpdate(int n_z, MatrixXd &R, MatrixXd &Zsig, SensorReading &re
   //add measurement noise covariance matrix
   S += R;
 
-  //create matrix for cross correlation Tc
+
+
+  //calculate cross correlation matrix Tc
   MatrixXd Tc = MatrixXd::Zero(n_x, n_z);
-  //calculate cross correlation matrix
-  for (int i = 0; i < 2 * n_aug + 1; i++) {
+  for (int i = 0; i < total_sig_points; i++) {
     //residual
     VectorXd z_diff = Zsig.col(i) - z_pred;
     //angle normalization
@@ -286,15 +289,18 @@ void Ukf::CompleteUpdate(int n_z, MatrixXd &R, MatrixXd &Zsig, SensorReading &re
   }
 
   //Kalman gain K;
-  MatrixXd K = Tc * S.inverse();
+  MatrixXd Si = S.inverse();
+  MatrixXd K = Tc * Si;
 
   //error
-  VectorXd z_diff = reading.measurement - z_pred;
+  VectorXd z_error = reading.measurement - z_pred;
 
   //angle normalization
-  z_diff(1) = atan2(sin(z_diff(1)), cos(z_diff(1)));
+  z_error(1) = atan2(sin(z_error(1)), cos(z_error(1)));
 
   //correct x and P
-  x = x + K * z_diff;
+  x = x + K * z_error;
   P = P - K*S*K.transpose();
+
+  nis = z_error.transpose() * Si * z_error;
 }

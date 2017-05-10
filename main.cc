@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
         out_file_ << "radar" << "\t";
 
         // NIS value
-        out_file_ << ukf.nis_radar << "\t";
+        out_file_ << ukf.nis << "\t";
         out_file_ << reading.measurement(0) * cos(reading.measurement(1)) << "\t";
         out_file_ << reading.measurement(0) * sin(reading.measurement(1)) << "\t";
         break;
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
         out_file_ << "lidar" << "\t";
 
         // NIS value
-        out_file_ << ukf.nis_laser << "\t";
+        out_file_ << ukf.nis << "\t";
         out_file_ << reading.measurement(0) << "\t";
         out_file_ << reading.measurement(1) << "\t";
         break;
