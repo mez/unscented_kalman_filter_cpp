@@ -97,17 +97,17 @@ int main(int argc, char* argv[]) {
     ukf.ProcessMeasurement(reading);
 
     // output the estimation
-    VectorXd x_ = ukf.x_;
+    VectorXd x_ = ukf.x;
 
     // timestamp
     out_file_ << reading.timestamp << "\t"; // pos1 - est
 
     // output the state vector
-    out_file_ << ukf.x_(0) << "\t"; // pos1 - est
-    out_file_ << ukf.x_(1) << "\t"; // pos2 - est
-    out_file_ << ukf.x_(2) << "\t"; // vel_abs -est
-    out_file_ << ukf.x_(3) << "\t"; // yaw_angle -est
-    out_file_ << ukf.x_(4) << "\t"; // yaw_rate -est
+    out_file_ << ukf.x(0) << "\t"; // pos1 - est
+    out_file_ << ukf.x(1) << "\t"; // pos2 - est
+    out_file_ << ukf.x(2) << "\t"; // vel_abs -est
+    out_file_ << ukf.x(3) << "\t"; // yaw_angle -est
+    out_file_ << ukf.x(4) << "\t"; // yaw_rate -est
 
     switch (reading.sensor_type) {
       case SensorType::RADAR:
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
         out_file_ << "radar" << "\t";
 
         // NIS value
-        out_file_ << ukf.NIS_radar_ << "\t";
+        out_file_ << ukf.nis_radar << "\t";
         out_file_ << reading.measurement(0) * cos(reading.measurement(1)) << "\t";
         out_file_ << reading.measurement(0) * sin(reading.measurement(1)) << "\t";
         break;
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
         out_file_ << "lidar" << "\t";
 
         // NIS value
-        out_file_ << ukf.NIS_laser_ << "\t";
+        out_file_ << ukf.nis_laser << "\t";
         out_file_ << reading.measurement(0) << "\t";
         out_file_ << reading.measurement(1) << "\t";
         break;
@@ -141,12 +141,14 @@ int main(int argc, char* argv[]) {
     // convert ukf x vector to cartesian to compare to ground truth
     VectorXd ukf_x_cartesian_ = VectorXd(4);
 
-    float x_estimate_ = ukf.x_(0);
-    float y_estimate_ = ukf.x_(1);
-    float vx_estimate_ = ukf.x_(2) * cos(ukf.x_(3));
-    float vy_estimate_ = ukf.x_(2) * sin(ukf.x_(3));
+    float x_estimate_ = ukf.x(0);
+    float y_estimate_ = ukf.x(1);
+    float vx_estimate_ = ukf.x(2) * cos(ukf.x(3));
+    float vy_estimate_ = ukf.x(2) * sin(ukf.x(3));
 
     ukf_x_cartesian_ << x_estimate_, y_estimate_, vx_estimate_, vy_estimate_;
+
+    //cout << "ukf_x_cartesian_: " << ukf_x_cartesian_ << endl;
 
     estimations.push_back(ukf_x_cartesian_);
   }

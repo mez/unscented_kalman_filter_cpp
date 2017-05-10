@@ -1,6 +1,6 @@
 # Unscented Kalman Filter in C++
 
-An Unscented Kalman Filter that uses a Constant Turn Rate and Velocity (CTRV) motion model in C++. This UKF fuses LIDAR and RADAR sensor readings.
+An Unscented Kalman Filter that uses a Constant Turn Rate and Velocity (CTRV) motion model in C++. This Ukf fuses LIDAR and RADAR sensor readings.
 
 **WIP**
 ---
