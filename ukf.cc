@@ -105,7 +105,7 @@ void Ukf::ProcessMeasurement(const SensorReading& reading) {
 }
 
 
-void Ukf::InitializeState(const SensorReading &reading) {
+void Ukf::InitializeState(const SensorReading& reading) {
   if(reading.sensor_type == SensorType::RADAR) {
     double ro    = reading.measurement[0];
     double theta = reading.measurement[1];
@@ -249,7 +249,7 @@ void Ukf::UpdateRadar(const SensorReading& reading) {
 }
 
 
-void Ukf::CompleteUpdate(const MatrixXd &Zsig, const SensorReading &reading) {
+void Ukf::CompleteUpdate(const MatrixXd& Zsig, const SensorReading& reading) {
 
   int n_z;
   MatrixXd R;
