@@ -8,10 +8,10 @@ using namespace utility;
 Ukf::Ukf() {
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a = 0.6;
+  std_a = 0.5;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd = 0.9;
+  std_yawdd = 0.8;
 
   is_initialized = false;
   previous_timestamp = 0;
@@ -54,8 +54,8 @@ Ukf::Ukf() {
   // Laser measurement noise standard deviation position2 in m
   std_laspy = 0.15;
 
-  R_lidar_ = MatrixXd(n_z_lidar,n_z_lidar);
-  R_lidar_ << std_laspx*std_laspx, 0,
+  R_lidar = MatrixXd(n_z_lidar,n_z_lidar);
+  R_lidar << std_laspx*std_laspx, 0,
               0, std_laspy*std_laspy;
 
   H_lidar = MatrixXd(n_z_lidar,n_x);
@@ -63,24 +63,24 @@ Ukf::Ukf() {
              0,1,0,0,0;
 
   // Radar measurement noise standard deviation radius in m
-  std_radr_ = 0.3;
+  std_radr = 0.3;
 
   // Radar measurement noise standard deviation angle in rad
-  std_radphi_ = 0.03;
+  std_radphi = 0.03;
 
   // Radar measurement noise standard deviation radius change in m/s
-  std_radrd_ = 0.3;
+  std_radrd = 0.3;
 
-  R_radar_ = MatrixXd(n_z_radar,n_z_radar);
-  R_radar_ << std_radr_*std_radr_, 0, 0,
-              0, std_radphi_*std_radphi_, 0,
-              0, 0,std_radrd_*std_radrd_;
+  R_radar = MatrixXd(n_z_radar,n_z_radar);
+  R_radar << std_radr*std_radr, 0, 0,
+              0, std_radphi*std_radphi, 0,
+              0, 0,std_radrd*std_radrd;
 
   nis = 0;
 }
 
 
-void Ukf::ProcessMeasurement(SensorReading& reading) {
+void Ukf::ProcessMeasurement(const SensorReading& reading) {
   if(!is_initialized) {
     InitializeState(reading);
   }
@@ -105,7 +105,7 @@ void Ukf::ProcessMeasurement(SensorReading& reading) {
 }
 
 
-void Ukf::InitializeState(SensorReading &reading) {
+void Ukf::InitializeState(const SensorReading &reading) {
   if(reading.sensor_type == SensorType::RADAR) {
     double ro    = reading.measurement[0];
     double theta = reading.measurement[1];
@@ -139,12 +139,12 @@ void Ukf::GenerateSigmaPoints() {
   P_aug.topLeftCorner(n_x,n_x) = P;
   MatrixXd A = P_aug.llt().matrixL();
 
-  x_aug.head(5) = x;
+  x_aug.head(n_x) = x;
   Xsig_aug.col(0)  = x_aug;
 
   for (int i = 0; i< n_aug; i++) {
     Xsig_aug.col(i+1)        = x_aug + sqrt(lambda+n_aug) * A.col(i);
-    Xsig_aug.col(i+1+n_aug) = x_aug - sqrt(lambda+n_aug) * A.col(i);
+    Xsig_aug.col(i+1+n_aug)  = x_aug - sqrt(lambda+n_aug) * A.col(i);
   }
 }
 
@@ -208,22 +208,19 @@ void Ukf::PredictMeanCovariance() {
 
     P += weights(i) * x_diff * x_diff.transpose();
   }
-
-  x_aug.head(5) = x;
-  P_aug.topLeftCorner(5,5) = P;
 }
 
 
-void Ukf::UpdateLidar(SensorReading& reading) {
+void Ukf::UpdateLidar(const SensorReading& reading) {
   //transform sigma points into measurement space
   MatrixXd Zsig = MatrixXd(n_z_lidar, total_sig_points);
   Zsig = H_lidar*Xsig_pred;
 
-  CompleteUpdate(n_z_lidar, R_lidar_, Zsig, reading);
+  CompleteUpdate(Zsig, reading);
 }
 
 
-void Ukf::UpdateRadar(SensorReading& reading) {
+void Ukf::UpdateRadar(const SensorReading& reading) {
 
   //transform sigma points into measurement space
   MatrixXd Zsig = MatrixXd(n_z_radar, total_sig_points);
@@ -248,11 +245,26 @@ void Ukf::UpdateRadar(SensorReading& reading) {
     
   }
 
-  CompleteUpdate(n_z_radar, R_radar_, Zsig, reading);
+  CompleteUpdate(Zsig, reading);
 }
 
 
-void Ukf::CompleteUpdate(int n_z, MatrixXd &R, MatrixXd &Zsig, SensorReading &reading) {
+void Ukf::CompleteUpdate(const MatrixXd &Zsig, const SensorReading &reading) {
+
+  int n_z;
+  MatrixXd R;
+
+  switch (reading.sensor_type) {
+    case SensorType::LASER:
+      n_z = n_z_lidar;
+      R = R_lidar;
+      break;
+    case SensorType::RADAR:
+      n_z = n_z_radar;
+      R = R_radar;
+      break;
+  }
+
   //mean predicted measurement
   VectorXd z_pred = Zsig * weights;
 
@@ -271,10 +283,9 @@ void Ukf::CompleteUpdate(int n_z, MatrixXd &R, MatrixXd &Zsig, SensorReading &re
   //add measurement noise covariance matrix
   S += R;
 
-
-
-  //calculate cross correlation matrix Tc
+  //create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd::Zero(n_x, n_z);
+  //calculate cross correlation matrix
   for (int i = 0; i < total_sig_points; i++) {
     //residual
     VectorXd z_diff = Zsig.col(i) - z_pred;
@@ -302,5 +313,6 @@ void Ukf::CompleteUpdate(int n_z, MatrixXd &R, MatrixXd &Zsig, SensorReading &re
   x = x + K * z_error;
   P = P - K*S*K.transpose();
 
+  //calculate NIS
   nis = z_error.transpose() * Si * z_error;
 }

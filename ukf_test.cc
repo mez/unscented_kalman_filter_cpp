@@ -142,16 +142,16 @@ Ukf GetDummyEkfObject() {
 //TEST_CASE("PredictRadarMeasurement() Test") {
 //  Ukf ukf = GetDummyEkfObject();
 //  //radar measurement noise standard deviation radius in m
-//  ukf.std_radr_  = 0.3;
+//  ukf.std_radr  = 0.3;
 //  //radar measurement noise standard deviation angle in rad
-//  ukf.std_radphi_ = 0.0175;
+//  ukf.std_radphi = 0.0175;
 //  //radar measurement noise standard deviation radius change in m/s
-//  ukf.std_radrd_ = 0.1;
+//  ukf.std_radrd = 0.1;
 //
 //  ukf.radar_R = MatrixXd(3,3);
-//  ukf.radar_R << ukf.std_radr_*ukf.std_radr_, 0, 0,
-//    0, ukf.std_radphi_*ukf.std_radphi_, 0,
-//    0, 0,ukf.std_radrd_*ukf.std_radrd_;
+//  ukf.radar_R << ukf.std_radr*ukf.std_radr, 0, 0,
+//    0, ukf.std_radphi*ukf.std_radphi, 0,
+//    0, 0,ukf.std_radrd*ukf.std_radrd;
 //
 //  VectorXd output_z = VectorXd(3);
 //  output_z << 6.12155,

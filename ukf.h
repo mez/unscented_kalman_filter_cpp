@@ -38,17 +38,17 @@ public:
   double std_laspy;
 
   // Radar measurement noise standard deviation radius in m
-  double std_radr_;
+  double std_radr;
 
   // Radar measurement noise standard deviation angle in rad
-  double std_radphi_;
+  double std_radphi;
 
   // Radar measurement noise standard deviation radius change in m/s
-  double std_radrd_ ;
+  double std_radrd ;
 
   // Measurement noise covariance matrices
-  Eigen::MatrixXd R_radar_;
-  Eigen::MatrixXd R_lidar_;
+  Eigen::MatrixXd R_radar;
+  Eigen::MatrixXd R_lidar;
   Eigen::MatrixXd H_lidar;
 
   ///* State dimension
@@ -73,7 +73,7 @@ public:
   // Constructor
   Ukf();
   
-  void InitializeState(utility::SensorReading &reading);
+  void InitializeState(const utility::SensorReading &reading);
   void GenerateSigmaPoints();
   void PredictSigmaPoints(double dt);
   void PredictMeanCovariance();
@@ -82,7 +82,7 @@ public:
    * ProcessMeasurement
    * @param reading The latest measurement data of either radar or laser
    */
-  void ProcessMeasurement(utility::SensorReading& reading);
+  void ProcessMeasurement(const utility::SensorReading& reading);
 
   /**
    * Prediction Predicts sigma points, the state, and the state covariance
@@ -95,17 +95,14 @@ public:
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(utility::SensorReading& reading);
+  void UpdateLidar(const utility::SensorReading& reading);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
    * @param reading The measurement at k+1
    */
-  void UpdateRadar(utility::SensorReading& reading);
-  void CompleteUpdate(int n_z,
-                      Eigen::MatrixXd &R,
-                      Eigen::MatrixXd &Zsig,
-                      utility::SensorReading &reading);
+  void UpdateRadar(const utility::SensorReading& reading);
+  void CompleteUpdate(const Eigen::MatrixXd &Zsig, const utility::SensorReading &reading);
 };
 
 #endif /* UKF_H */
